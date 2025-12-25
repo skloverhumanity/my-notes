@@ -3,55 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माझा माइंड मॅप</title>
+    <title>Advance Mind Map Builder</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
-        body { font-family: 'Arial', sans-serif; margin: 20px; background-color: #f4f7f6; }
-        h2 { color: #333; text-align: center; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; margin-bottom: 10px; }
-        button { background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:hover { background-color: #218838; }
-        #mindmap-output { margin-top: 30px; display: flex; justify-content: center; overflow: auto; }
-        .instructions { font-size: 14px; color: #666; margin-bottom: 10px; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f0f2f5; }
+        header { background: #1a73e8; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Editor Section */
+        .editor-section { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
+        textarea { flex: 1; width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: none; font-family: monospace; outline: none; }
+        textarea:focus { border-color: #1a73e8; }
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-update { background: #1a73e8; color: white; }
+        .btn-update:hover { background: #1557b0; }
+        
+        /* Viewer Section */
+        .viewer-section { flex: 1; padding: 20px; overflow: auto; display: flex; align-items: center; justify-content: center; background: #fff; }
+        
+        /* Responsive for Mobile */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .editor-section { width: 100%; height: 40%; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🧠 माझा माइंड मॅप नोट्स</h2>
-    <p class="instructions">खालील फॉरमॅटमध्ये नोट्स लिहा (उदा. विषय --> उपविषय):</p>
-    
-    <textarea id="noteInput">
-mindmap
-  root((माझा अभ्यास))
-    मराठी
-      व्याकरण
-      कविता
-    गणित
-      भूमिती
-      बीजगणित
-    इंग्रजी
-    </textarea>
-    
-    <button onclick="renderMap()">मॅप तयार करा</button>
+<header>🧠 Advance Mind Map Tool</header>
 
-    <div id="mindmap-output" class="mermaid">
+<div class="main-container">
+    <div class="editor-section">
+        <p style="margin-top:0; font-size: 13px; color: #666;">टीप: एका खाली एक विषय लिहा. उप-विषयासाठी 'Space' वापरा.</p>
+        <textarea id="noteInput" placeholder="इथे माहिती पेस्ट करा...">
+mindmap
+  root((माझा प्रोजेक्ट))
+    विषय १
+      उपविषय A
+      उपविषय B
+    विषय २
+      माहिती १
+      माहिती २
+        </textarea>
+        <div class="btn-group">
+            <button class="btn-update" onclick="renderMap()">मॅप रिफ्रेश करा</button>
         </div>
+    </div>
+
+    <div class="viewer-section">
+        <div id="graphDiv" class="mermaid"></div>
+    </div>
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: 'forest',
+        securityLevel: 'loose',
+        mindmap: { useMaxWidth: true } 
+    });
 
-    function renderMap() {
+    async function renderMap() {
         const input = document.getElementById('noteInput').value;
-        const output = document.getElementById('mindmap-output');
+        const output = document.getElementById('graphDiv');
         
-        // जुना मॅप साफ करून नवीन बनवणे
+        // क्लियर आणि रेंडर
         output.removeAttribute('data-processed');
         output.innerHTML = input;
         
-        mermaid.contentLoaded();
+        try {
+            await mermaid.run({
+                nodes: [output]
+            });
+        } catch (e) {
+            console.error("Syntax Error", e);
+        }
     }
 </script>
 
