@@ -3,93 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Mind Map Builder</title>
+    <title>Super Smart MindMap</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f4f4f4; }
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
         header { background: #f4b400; color: white; padding: 10px; font-weight: bold; text-align: center; }
         .main { display: flex; flex: 1; overflow: hidden; }
-        .editor { width: 300px; background: white; padding: 15px; display: flex; flex-direction: column; border-right: 1px solid #ccc; }
-        textarea { flex: 1; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; font-size: 14px; }
-        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-bottom: 5px; }
+        .editor { width: 350px; background: white; padding: 15px; display: flex; flex-direction: column; border-right: 1px solid #ccc; }
+        textarea { flex: 1; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; font-size: 13px; line-height: 1.4; }
+        button { padding: 12px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-bottom: 5px; }
         .btn-blue { background: #4285f4; color: white; }
         .btn-green { background: #34a853; color: white; }
         .viewer { flex: 1; padding: 20px; overflow: auto; background: white; }
-        #capture-area { display: inline-block; padding: 20px; background: white; }
+        #capture-area { display: inline-block; padding: 20px; background: white; min-width: 800px; }
     </style>
 </head>
 <body>
 
-<header>🧠 My Easy Mind Map</header>
+<header>🚀 AI Note to MindMap Converter</header>
 
 <div class="main">
     <div class="editor">
-        <textarea id="textInput" placeholder="पहिली ओळ मुख्य विषय असावी...">माझा विषय
-  उपविषय १
-  उपविषय २</textarea>
-        <button class="btn-blue" onclick="makeMap()">मॅप तयार करा</button>
+        <textarea id="textInput" placeholder="तुमची मोठी नोट इथे पेस्ट करा...">Cloud Developer Checklist
+  Google Colab
+    Python Coding
+  GitHub Codespaces
+    VS Code in Browser
+  GitHub
+    Unlimited Storage
+  MongoDB Atlas
+    NoSQL Database</textarea>
+        <button class="btn-blue" onclick="makeSmartMap()">माइंड मॅप बनवा</button>
         <button class="btn-green" onclick="downloadImg()">Download PNG</button>
+        <p id="msg" style="font-size: 11px; color: gray;">टीप: लिंक किंवा मोठी चिन्हे मॅपमध्ये येणार नाहीत.</p>
     </div>
     <div class="viewer">
         <div id="capture-area">
-            <pre id="output" class="mermaid"></pre>
+            <div id="output" class="mermaid"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Mermaid Initialize
-    mermaid.initialize({ startOnLoad: false, theme: 'forest' });
+    mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
 
-    async function makeMap() {
-        const input = document.getElementById('textInput').value.trim();
+    async function makeSmartMap() {
+        const input = document.getElementById('textInput').value;
         const display = document.getElementById('output');
         
-        if (!input) return;
+        if (!input.trim()) return;
 
-        // १. साध्या टेक्स्टला माइंड मॅप कोडिंगमध्ये बदलणे
         let lines = input.split('\n');
-        let code = "mindmap\n  root((" + lines[0].trim().replace(/[^\u0900-\u097F\w\s]/g, '') + "))\n";
+        let mCode = "mindmap\n";
         
+        // पहिली ओळ मुख्य विषय
+        let rootTitle = lines[0].trim().substring(0, 40).replace(/[^\u0900-\u097F\w\s]/g, '');
+        mCode += `  root((${rootTitle}))\n`;
+
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i];
-            let clean = line.trim().replace(/[^\u0900-\u097F\w\s]/g, '');
-            if (clean) {
-                if (line.startsWith(' ')) {
-                    code += "    " + clean + "\n";
+            // लिंक, ईमेल आणि कंसातली माहिती काढून टाकणे ( cleaning )
+            let clean = line.replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+                            .replace(/\([^)]*\)/g, '')         // Remove brackets text
+                            .replace(/[•\-\[\]\(\)\{\}\:\/]/g, '') // Remove symbols
+                            .trim();
+
+            if (clean.length > 2) {
+                // शब्दांची लांबी मर्यादित ठेवणे जेणेकरून मॅप चांगला दिसेल
+                let shortText = clean.substring(0, 50); 
+                
+                // जर ओळीची सुरुवात स्पेसने असेल तर त्याला सब-नोड बनवणे
+                if (line.startsWith(' ') || line.startsWith('\t') || line.startsWith('•')) {
+                    mCode += `    ${shortText}\n`;
                 } else {
-                    code += "  " + clean + "\n";
+                    mCode += `  ${shortText}\n`;
                 }
             }
         }
 
-        // २. ग्राफ रेंडर करणे
         display.removeAttribute('data-processed');
-        display.innerHTML = code;
+        display.innerHTML = mCode;
         
         try {
-            await mermaid.run({
-                nodes: [display]
-            });
+            await mermaid.run({ nodes: [display] });
         } catch (err) {
             console.error(err);
-            display.innerHTML = "क्षमस्व! फॉरमॅटमध्ये चूक आहे. कृपया साधे शब्द वापरा.";
+            display.innerHTML = "<p style='color:red;'>मॅप बनवताना अडचण आली. कृपया माहिती थोडी कमी करा किंवा साधी ठेवा.</p>";
         }
     }
 
     function downloadImg() {
         const area = document.getElementById('capture-area');
-        html2canvas(area).then(canvas => {
+        html2canvas(area, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'mindmap.png';
+            link.download = 'Cloud-Checklist.png';
             link.href = canvas.toDataURL();
             link.click();
         });
     }
 
-    // ऑटोमॅटिक पहिला मॅप लोड करण्यासाठी
-    window.onload = makeMap;
+    window.onload = makeSmartMap;
 </script>
 
 </body>
