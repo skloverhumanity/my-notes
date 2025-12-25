@@ -3,121 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Mind Map Builder</title>
+    <title>Smart Note to MindMap</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
-        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Editor Area */
-        .editor-container { width: 380px; display: flex; flex-direction: column; background: white; border-right: 1px solid #ddd; padding: 15px; }
-        textarea { flex: 1; width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: monospace; outline: none; }
-        
-        .toolbar { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-download { background: #10b981; color: white; }
-        .btn-update { background: #2563eb; color: white; }
-        .btn-clear { background: #ef4444; color: white; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        /* Viewer Area */
-        .viewer-container { flex: 1; padding: 40px; overflow: auto; background: #ffffff; display: flex; justify-content: center; align-items: flex-start; }
-        #capture-area { padding: 20px; background: white; min-width: 500px; display: flex; justify-content: center; }
-
-        @media (max-width: 768px) {
-            .main-container { flex-direction: column; }
-            .editor-container { width: 100%; height: 40%; }
-            #capture-area { min-width: 100%; }
-        }
+        :root { --primary: #f4b400; --bg: #fffbf0; } /* Google Keep सारखा पिवळा रंग */
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .input-area { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #f1f1f1; }
+        textarea { flex: 1; width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-size: 14px; resize: none; outline: none; }
+        .controls { margin-top: 10px; display: grid; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-convert { background: #4285f4; color: white; }
+        .btn-download { background: #34a853; color: white; }
+        .viewer { flex: 1; padding: 20px; overflow: auto; background: white; display: flex; justify-content: center; }
+        #capture { padding: 30px; }
     </style>
 </head>
 <body>
 
 <header>
-    <span>🚀 My MindMap Pro v2.0</span>
-    <span style="font-size: 12px;">Auto-Saving...</span>
+    <span>📝 Smart Note Fetcher</span>
+    <span id="status">Ready</span>
 </header>
 
-<div class="main-container">
-    <div class="editor-container">
-        <textarea id="noteInput" oninput="renderMap()" placeholder="इथे नोट्स लिहा...">
-mindmap
-  root((माझा प्रोजेक्ट))
-    अभ्यास
-      मराठी
-      गणित
-    कामाची यादी
-      बाजार
-      बँक
-        </textarea>
+<div class="main">
+    <div class="input-area">
+        <label style="font-size: 12px; margin-bottom: 5px;">Google Keep किंवा नोट्स इकडे पेस्ट करा:</label>
+        <textarea id="rawInput" placeholder="उदा. 
+फळ
+ सफरचंद
+ आंबा
+भाज्या
+ कोबी
+ मेथी"></textarea>
         
-        <div class="toolbar">
-            <button class="btn-update" onclick="renderMap()">Update</button>
-            <button class="btn-download" onclick="exportImage()">Download Image</button>
-            <button class="btn-clear" onclick="clearAll()">Clear</button>
-            <button style="background:#64748b; color:white;" onclick="copyLink()">Copy Link</button>
+        <div class="controls">
+            <button class="btn-convert" onclick="processAndRender()">माइंड मॅप बनवा</button>
+            <button class="btn-download" onclick="downloadImage()">Download PNG</button>
+            <button onclick="clearText()">Clear</button>
         </div>
     </div>
 
-    <div class="viewer-container">
-        <div id="capture-area">
+    <div class="viewer">
+        <div id="capture">
             <div id="graphDiv" class="mermaid"></div>
         </div>
     </div>
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'forest', securityLevel: 'loose' });
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
 
-    window.onload = () => {
-        const saved = localStorage.getItem('proMindMap');
-        if (saved) document.getElementById('noteInput').value = saved;
-        renderMap();
-    };
+    function processAndRender() {
+        const rawText = document.getElementById('rawInput').value.trim();
+        if (!rawText) return;
 
-    async function renderMap() {
-        const input = document.getElementById('noteInput').value;
+        // Smart Logic: साध्या टेक्स्टला Mermaid माइंड मॅप फॉरमॅटमध्ये बदलणे
+        let lines = rawText.split('\n');
+        let mermaidCode = "mindmap\n  root((माझी नोट))";
+
+        lines.forEach(line => {
+            if(line.trim() !== "") {
+                // जर ओळीच्या सुरुवातीला स्पेस असेल तर तो उपविषय मानला जाईल
+                let indent = line.search(/\S/); 
+                let content = line.trim();
+                
+                // साध्या लिस्टला माइंड मॅप फांद्यांमध्ये बदलणे
+                if (indent === 0) {
+                    mermaidCode += `\n    ${content}`;
+                } else {
+                    mermaidCode += `\n      ${content}`;
+                }
+            }
+        });
+
         const output = document.getElementById('graphDiv');
-        localStorage.setItem('proMindMap', input); // Auto Save
-        
         output.removeAttribute('data-processed');
-        output.innerHTML = input;
-        try {
-            await mermaid.run({ nodes: [output] });
-        } catch (e) {}
+        output.innerHTML = mermaidCode;
+        
+        mermaid.run({ nodes: [output] });
+        document.getElementById('status').innerText = "Updated!";
     }
 
-    // Direct Image Download Function
-    function exportImage() {
-        const area = document.getElementById('capture-area');
-        const btn = document.querySelector('.btn-download');
-        btn.innerText = "Processing...";
-        
-        html2canvas(area, {
-            backgroundColor: "#ffffff",
-            scale: 2 // High Quality
-        }).then(canvas => {
+    function downloadImage() {
+        const area = document.getElementById('capture');
+        html2canvas(area).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'my-mindmap.png';
-            link.href = canvas.toDataURL('image/png');
+            link.download = 'my-notes.png';
+            link.href = canvas.toDataURL();
             link.click();
-            btn.innerText = "Download Image";
         });
     }
 
-    function clearAll() {
-        if(confirm("सावधान! सर्व नोट्स पुसल्या जातील.")) {
-            document.getElementById('noteInput').value = "mindmap\n  root((विषय))";
-            renderMap();
-        }
-    }
-
-    function copyLink() {
-        navigator.clipboard.writeText(window.location.href);
-        alert("Link Copied!");
+    function clearText() {
+        document.getElementById('rawInput').value = "";
     }
 </script>
 
