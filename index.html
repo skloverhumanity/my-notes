@@ -3,83 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advance Mind Map Builder</title>
+    <title>My Pro Mind Map Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f0f2f5; }
-        header { background: #1a73e8; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body.dark { --bg: #1e293b; --text: #f8fafc; }
+        
+        * { box-sizing: border-box; transition: 0.3s; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
         .main-container { display: flex; flex: 1; overflow: hidden; }
         
-        /* Editor Section */
-        .editor-section { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
-        textarea { flex: 1; width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: none; font-family: monospace; outline: none; }
-        textarea:focus { border-color: #1a73e8; }
-        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-update { background: #1a73e8; color: white; }
-        .btn-update:hover { background: #1557b0; }
+        /* Editor Area */
+        .editor-container { width: 380px; display: flex; flex-direction: column; background: white; border-right: 1px solid #ddd; padding: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        body.dark .editor-container { background: #0f172a; border-color: #334155; }
         
-        /* Viewer Section */
-        .viewer-section { flex: 1; padding: 20px; overflow: auto; display: flex; align-items: center; justify-content: center; background: #fff; }
+        textarea { flex: 1; width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: 'Fira Code', monospace; resize: none; outline: none; background: transparent; color: inherit; }
         
-        /* Responsive for Mobile */
+        .toolbar { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        button { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .btn-blue { background: #2563eb; color: white; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-outline { border: 1px solid #cbd5e1; background: transparent; color: var(--text); }
+
+        /* Viewer Area */
+        .viewer-container { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+        #graphDiv { margin: auto; min-width: 600px; }
+
         @media (max-width: 768px) {
             .main-container { flex-direction: column; }
-            .editor-section { width: 100%; height: 40%; }
+            .editor-container { width: 100%; height: 45%; }
         }
     </style>
 </head>
 <body>
 
-<header>🧠 Advance Mind Map Tool</header>
+<header>
+    <span>🚀 My MindMap Pro</span>
+    <div>
+        <button class="btn-outline" onclick="toggleDark()" style="padding: 5px 10px;">🌙/☀️</button>
+    </div>
+</header>
 
 <div class="main-container">
-    <div class="editor-section">
-        <p style="margin-top:0; font-size: 13px; color: #666;">टीप: एका खाली एक विषय लिहा. उप-विषयासाठी 'Space' वापरा.</p>
-        <textarea id="noteInput" placeholder="इथे माहिती पेस्ट करा...">
+    <div class="editor-container">
+        <textarea id="noteInput" oninput="renderMap()" placeholder="तुमच्या नोट्स इथे लिहा...">
 mindmap
-  root((माझा प्रोजेक्ट))
-    विषय १
-      उपविषय A
-      उपविषय B
-    विषय २
-      माहिती १
-      माहिती २
+  root((माझे ध्येय 2024))
+    अभ्यास
+      गणित
+      विज्ञान
+    आरोग्य
+      व्यायाम
+      योगा
+    प्रोजेक्ट्स
+      वेबसाईट
         </textarea>
-        <div class="btn-group">
-            <button class="btn-update" onclick="renderMap()">मॅप रिफ्रेश करा</button>
+        
+        <div class="toolbar">
+            <button class="btn-blue" onclick="renderMap()">Update Map</button>
+            <button class="btn-green" onclick="downloadMap()">Download PNG</button>
+            <button class="btn-outline" onclick="clearNotes()">Clear All</button>
+            <button class="btn-outline" onclick="copyText()">Copy Text</button>
         </div>
     </div>
 
-    <div class="viewer-section">
+    <div class="viewer-container">
         <div id="graphDiv" class="mermaid"></div>
     </div>
 </div>
 
 <script>
-    mermaid.initialize({ 
-        startOnLoad: true, 
-        theme: 'forest',
-        securityLevel: 'loose',
-        mindmap: { useMaxWidth: true } 
-    });
+    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+
+    // LocalStorage मधून जुन्या नोट्स लोड करणे
+    window.onload = () => {
+        const savedNotes = localStorage.getItem('myMindMapNotes');
+        if (savedNotes) {
+            document.getElementById('noteInput').value = savedNotes;
+        }
+        renderMap();
+    };
 
     async function renderMap() {
         const input = document.getElementById('noteInput').value;
         const output = document.getElementById('graphDiv');
         
-        // क्लियर आणि रेंडर
+        // Auto Save to LocalStorage
+        localStorage.setItem('myMindMapNotes', input);
+        
         output.removeAttribute('data-processed');
         output.innerHTML = input;
         
         try {
-            await mermaid.run({
-                nodes: [output]
-            });
-        } catch (e) {
-            console.error("Syntax Error", e);
+            await mermaid.run({ nodes: [output] });
+        } catch (e) {}
+    }
+
+    function toggleDark() {
+        document.body.classList.toggle('dark');
+    }
+
+    function clearNotes() {
+        if(confirm("सगळ्या नोट्स पुसून टाकायच्या का?")) {
+            document.getElementById('noteInput').value = "mindmap\n  root((मुख्य विषय))";
+            renderMap();
         }
+    }
+
+    function copyText() {
+        const text = document.getElementById('noteInput');
+        text.select();
+        document.execCommand('copy');
+        alert("Notes copied!");
+    }
+
+    function downloadMap() {
+        alert("टीप: इमेज डाऊनलोड करण्यासाठी मॅपवर राइट क्लिक करून 'Save Image As' करा.");
     }
 </script>
 
