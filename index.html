@@ -3,207 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart MindMap Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+    <title>Simple Mind Map Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #f4b400; --bg: #f9f9f9; }<!DOCTYPE html>
-<html lang="mr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Easy MindMap</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <style>
-        :root { --primary: #f4b400; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #fafafa; display: flex; flex-direction: column; height: 100vh; }
-        header { background: var(--primary); color: white; padding: 12px; font-weight: bold; display: flex; justify-content: space-between; }
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f4f4f4; }
+        header { background: #f4b400; color: white; padding: 10px; font-weight: bold; text-align: center; }
         .main { display: flex; flex: 1; overflow: hidden; }
-        .editor { width: 320px; background: white; padding: 15px; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
-        textarea { flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 5px; padding: 10px; font-size: 14px; resize: none; outline: none; }
-        .btns { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-blue { background: #4285f4; }
-        .btn-green { background: #34a853; }
+        .editor { width: 300px; background: white; padding: 15px; display: flex; flex-direction: column; border-right: 1px solid #ccc; }
+        textarea { flex: 1; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; font-size: 14px; }
+        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-bottom: 5px; }
+        .btn-blue { background: #4285f4; color: white; }
+        .btn-green { background: #34a853; color: white; }
         .viewer { flex: 1; padding: 20px; overflow: auto; background: white; }
-        #capture { padding: 20px; min-width: 600px; display: flex; justify-content: center; }
-        @media (max-width: 768px) { .main { flex-direction: column; } .editor { width: 100%; height: 35%; } }
+        #capture-area { display: inline-block; padding: 20px; background: white; }
     </style>
 </head>
 <body>
 
-<header>
-    <span>🧠 My Smart MindMap</span>
-    <span id="status" style="font-size: 12px;">Ready</span>
-</header>
+<header>🧠 My Easy Mind Map</header>
 
 <div class="main">
     <div class="editor">
-        <p style="font-size: 11px; margin-bottom: 5px; color: #666;">टीप: मुख्य विषय पहिल्या ओळीत लिहा. उपविषयांच्या मागे एक स्पेस द्या.</p>
-        <textarea id="userInput" placeholder="इथे लिहा...">माझा अभ्यास
- मराठी
- गणित
- विज्ञान</textarea>
-        <div class="btns">
-            <button class="btn-blue" onclick="renderNow()">मॅप बनवा</button>
-            <button class="btn-green" onclick="takeShot()">Download PNG</button>
-        </div>
-    </div>
-    <div class="viewer">
-        <div id="capture">
-            <div id="graph" class="mermaid"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
-
-    async function renderNow() {
-        const raw = document.getElementById('userInput').value.trim();
-        const status = document.getElementById('status');
-        const container = document.getElementById('graph');
-
-        if (!raw) return;
-        status.innerText = "Processing...";
-
-        // १. स्मार्ट लॉजिक: कोणत्याही मजकुराला माइंड मॅप स्ट्रक्चरमध्ये बसवणे
-        let lines = raw.split('\n');
-        let mCode = "mindmap\n";
-        
-        // पहिली ओळ मुख्य विषय (Root Node) बनवणे
-        let root = lines[0].trim().replace(/[^\w\s\u0900-\u097F]/gi, '');
-        mCode += `  root((${root}))\n`;
-
-        // बाकी ओळी उपविषय (Sub-nodes) बनवणे
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i];
-            let content = line.trim().replace(/[^\w\s\u0900-\u097F]/gi, '');
-            if (content) {
-                // जर स्पेस असेल तर जास्त आतली फांदी, नसेल तर जवळची फांदी
-                if (line.startsWith(' ') || line.startsWith('\t')) {
-                    mCode += `    ${content}\n`;
-                } else {
-                    mCode += `  ${content}\n`;
-                }
-            }
-        }
-
-        // २. ग्राफ रिफ्रेश आणि रेंडर
-        container.removeAttribute('data-processed');
-        container.innerHTML = mCode;
-
-        try {
-            await mermaid.run({ nodes: [container] });
-            status.innerText = "Success!";
-        } catch (e) {
-            console.error(e);
-            status.innerText = "Formatting Error!";
-            container.innerHTML = "<p style='color:red'>क्षमस्व! या नोट्सचा मॅप बनवता आला नाही. कृपया साध्या ओळींत लिहा.</p>";
-        }
-    }
-
-    function takeShot() {
-        html2canvas(document.getElementById('capture')).then(canvas => {
-            let link = document.createElement('a');
-            link.download = 'mindmap.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        });
-    }
-
-    window.onload = renderNow;
-</script>
-
-</body>
-</html>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
-        header { background: var(--primary); color: white; padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .editor { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
-        textarea { flex: 1; width: 100%; border: 2px solid #eee; border-radius: 8px; padding: 15px; font-size: 14px; outline: none; transition: 0.3s; resize: none; }
-        textarea:focus { border-color: var(--primary); }
-        .btn-group { margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
-        .btn-update { background: #4285f4; }
-        .btn-download { background: #34a853; }
-        .viewer { flex: 1; padding: 20px; overflow: auto; display: flex; justify-content: center; background: #fff; }
-        #capture-area { padding: 40px; min-width: 600px; }
-        @media (max-width: 768px) { .main-container { flex-direction: column; } .editor { width: 100%; height: 40%; } }
-    </style>
-</head>
-<body>
-
-<header>
-    <span>🧠 Smart Note Fetcher (Fixed)</span>
-    <span id="msg" style="font-size: 12px; background: rgba(0,0,0,0.1); padding: 4px 10px; border-radius: 12px;">Waiting...</span>
-</header>
-
-<div class="main-container">
-    <div class="editor">
-        <textarea id="rawInput" placeholder="इथे नोट्स पेस्ट करा...">माझा अभ्यास
- मराठी
- व्याकरण
- गणित
- भूमिती</textarea>
-        <div class="btn-group">
-            <button class="btn-update" onclick="drawMap()">मॅप बनवा</button>
-            <button class="btn-download" onclick="saveImage()">Download PNG</button>
-        </div>
+        <textarea id="textInput" placeholder="पहिली ओळ मुख्य विषय असावी...">माझा विषय
+  उपविषय १
+  उपविषय २</textarea>
+        <button class="btn-blue" onclick="makeMap()">मॅप तयार करा</button>
+        <button class="btn-green" onclick="downloadImg()">Download PNG</button>
     </div>
     <div class="viewer">
         <div id="capture-area">
-            <div id="graphDiv"></div>
+            <pre id="output" class="mermaid"></pre>
         </div>
     </div>
 </div>
 
 <script>
-    // Mermaid सेटअप
-    mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
+    // Mermaid Initialize
+    mermaid.initialize({ startOnLoad: false, theme: 'forest' });
 
-    async function drawMap() {
-        const text = document.getElementById('rawInput').value.trim();
-        const msg = document.getElementById('msg');
-        if (!text) return;
+    async function makeMap() {
+        const input = document.getElementById('textInput').value.trim();
+        const display = document.getElementById('output');
+        
+        if (!input) return;
 
-        msg.innerText = "Processing...";
-
-        // १. साध्या टेक्स्टला माइंड मॅप कोडमध्ये बदलणे (Error-Free Logic)
-        let lines = text.split('\n');
-        let formattedCode = "mindmap\n  root((माझी नोट))";
-
-        lines.forEach(line => {
-            if (line.trim() !== "") {
-                // स्पेशल कॅरेक्टर्स क्लीन करणे
-                let cleanText = line.trim().replace(/[()\[\]{}:;]/g, ""); 
-                
-                // जर ओळीची सुरुवात स्पेसने झाली असेल तर तो चाइल्ड नोड (उप-विषय)
-                if (line.startsWith(' ') || line.startsWith('\t')) {
-                    formattedCode += `\n    ${cleanText}`;
+        // १. साध्या टेक्स्टला माइंड मॅप कोडिंगमध्ये बदलणे
+        let lines = input.split('\n');
+        let code = "mindmap\n  root((" + lines[0].trim().replace(/[^\u0900-\u097F\w\s]/g, '') + "))\n";
+        
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i];
+            let clean = line.trim().replace(/[^\u0900-\u097F\w\s]/g, '');
+            if (clean) {
+                if (line.startsWith(' ')) {
+                    code += "    " + clean + "\n";
                 } else {
-                    formattedCode += `\n  ${cleanText}`;
+                    code += "  " + clean + "\n";
                 }
             }
-        });
+        }
 
         // २. ग्राफ रेंडर करणे
-        const output = document.getElementById('graphDiv');
-        output.innerHTML = `<pre class="mermaid">${formattedCode}</pre>`;
+        display.removeAttribute('data-processed');
+        display.innerHTML = code;
         
         try {
-            await mermaid.run();
-            msg.innerText = "Success!";
-        } catch (e) {
-            console.error(e);
-            msg.innerText = "Syntax Error!";
-            // एरर आल्यास जुनी पद्धत वापरून पाहणे
-            output.innerHTML = "काहीतरी चूक झाली आहे. कृपया माहिती पुन्हा चेक करा.";
+            await mermaid.run({
+                nodes: [display]
+            });
+        } catch (err) {
+            console.error(err);
+            display.innerHTML = "क्षमस्व! फॉरमॅटमध्ये चूक आहे. कृपया साधे शब्द वापरा.";
         }
     }
 
-    function saveImage() {
+    function downloadImg() {
         const area = document.getElementById('capture-area');
         html2canvas(area).then(canvas => {
             const link = document.createElement('a');
@@ -213,8 +88,8 @@
         });
     }
 
-    // सुरुवातीला एकदा मॅप दाखवण्यासाठी
-    window.onload = drawMap;
+    // ऑटोमॅटिक पहिला मॅप लोड करण्यासाठी
+    window.onload = makeMap;
 </script>
 
 </body>
