@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Mind Map Builder</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <title>Fixed Mind Map Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root { --primary: #f4b400; --bg: #fffbf0; }
@@ -17,17 +17,15 @@
         button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
         .btn-blue { background: #4285f4; }
         .btn-green { background: #34a853; }
-        .btn-red { background: #ea4335; }
         .viewer { flex: 1; padding: 20px; overflow: auto; background: white; display: flex; justify-content: center; align-items: flex-start; }
         #capture-area { padding: 40px; background: white; min-width: 600px; }
-        @media (max-width: 768px) { .main { flex-direction: column; } .input-area { width: 100%; height: 40%; border-right: none; border-bottom: 2px solid #eee; } }
     </style>
 </head>
 <body>
 
 <header>
-    <span>📝 Smart Note Fetcher v3</span>
-    <span id="status" style="font-size: 12px; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 10px;">Ready</span>
+    <span>📝 Smart Note Fetcher (Fixed)</span>
+    <span id="status">Ready</span>
 </header>
 
 <div class="main">
@@ -36,13 +34,12 @@
 उदा:
 फळे
  आंबा
- चिकू
-भाज्या
- कोबी"></textarea>
+ चिकू">फळे
+ आंबा
+ चिकू</textarea>
         <div class="controls">
             <button class="btn-blue" onclick="generateMap()">माइंड मॅप बनवा</button>
             <button class="btn-green" onclick="downloadPNG()">Download PNG</button>
-            <button class="btn-red" onclick="clearAll()">Clear</button>
         </div>
     </div>
     <div class="viewer">
@@ -53,62 +50,61 @@
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'forest', securityLevel: 'loose', mindmap: { useMaxWidth: true } });
+    // सुरक्षित इनिशियलायझेशन
+    mermaid.initialize({ 
+        startOnLoad: false, 
+        theme: 'forest',
+        securityLevel: 'loose'
+    });
 
     async function generateMap() {
         const rawText = document.getElementById('rawInput').value.trim();
-        const status = document.getElementById('status');
-        
-        if (!rawText) {
-            alert("Kripaya kahi tari mahiti taka!");
-            return;
-        }
+        if (!rawText) return;
 
-        status.innerText = "Generating...";
-
-        // Smart Logic to convert plain text to Mermaid format
+        // मॅन्युअली सुरक्षित कोडींग तयार करणे
         let lines = rawText.split('\n');
         let mCode = "mindmap\n  root((माझी नोट))";
 
         lines.forEach(line => {
             if (line.trim() !== "") {
-                let content = line.trim().replace(/[()]/g, ""); // Remove brackets to avoid errors
-                // Check if line is indented (sub-topic)
+                // स्पेशल कॅरेक्टर्स काढून टाकणे ज्यामुळे एरर येतो
+                let content = line.trim().replace(/[()\[\]{}]/g, ""); 
+                
                 if (line.startsWith(' ') || line.startsWith('\t')) {
-                    mCode += `\n      ${content}`;
-                } else {
                     mCode += `\n    ${content}`;
+                } else {
+                    mCode += `\n  ${content}`;
                 }
             }
         });
 
         const output = document.getElementById('graphDiv');
-        output.innerHTML = `<div class="mermaid">${mCode}</div>`;
+        
+        // जुना मॅप पूर्णपणे पुसून नवीन रेंडर करणे
+        output.innerHTML = `<pre class="mermaid">${mCode}</pre>`;
         
         try {
+            // नवीन पद्धतीनुसार रेंडरिंग
             await mermaid.run();
-            status.innerText = "Success!";
+            document.getElementById('status').innerText = "Success!";
         } catch (err) {
-            console.error(err);
-            status.innerText = "Error in format!";
+            console.error("Mermaid Error:", err);
+            document.getElementById('status').innerText = "Format Error!";
         }
     }
 
     function downloadPNG() {
         const area = document.getElementById('capture-area');
-        html2canvas(area, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+        html2canvas(area, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'my-mindmap.png';
+            link.download = 'mindmap.png';
             link.href = canvas.toDataURL();
             link.click();
         });
     }
 
-    function clearAll() {
-        document.getElementById('rawInput').value = "";
-        document.getElementById('graphDiv').innerHTML = "";
-        document.getElementById('status').innerText = "Cleared";
-    }
+    // पेज लोड झाल्यावर पहिला मॅप दाखवण्यासाठी
+    window.onload = generateMap;
 </script>
 
 </body>
