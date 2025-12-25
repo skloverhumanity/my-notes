@@ -3,102 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Note to MindMap</title>
+    <title>Smart Mind Map Builder</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #f4b400; --bg: #fffbf0; } /* Google Keep सारखा पिवळा रंग */
+        :root { --primary: #f4b400; --bg: #fffbf0; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
-        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
+        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .main { display: flex; flex: 1; overflow: hidden; }
-        .input-area { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #f1f1f1; }
-        textarea { flex: 1; width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-size: 14px; resize: none; outline: none; }
-        .controls { margin-top: 10px; display: grid; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-convert { background: #4285f4; color: white; }
-        .btn-download { background: #34a853; color: white; }
-        .viewer { flex: 1; padding: 20px; overflow: auto; background: white; display: flex; justify-content: center; }
-        #capture { padding: 30px; }
+        .input-area { width: 350px; background: white; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #eee; }
+        textarea { flex: 1; width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-size: 14px; resize: none; outline: none; margin-bottom: 10px; }
+        .controls { display: grid; gap: 8px; }
+        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-blue { background: #4285f4; }
+        .btn-green { background: #34a853; }
+        .btn-red { background: #ea4335; }
+        .viewer { flex: 1; padding: 20px; overflow: auto; background: white; display: flex; justify-content: center; align-items: flex-start; }
+        #capture-area { padding: 40px; background: white; min-width: 600px; }
+        @media (max-width: 768px) { .main { flex-direction: column; } .input-area { width: 100%; height: 40%; border-right: none; border-bottom: 2px solid #eee; } }
     </style>
 </head>
 <body>
 
 <header>
-    <span>📝 Smart Note Fetcher</span>
-    <span id="status">Ready</span>
+    <span>📝 Smart Note Fetcher v3</span>
+    <span id="status" style="font-size: 12px; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 10px;">Ready</span>
 </header>
 
 <div class="main">
     <div class="input-area">
-        <label style="font-size: 12px; margin-bottom: 5px;">Google Keep किंवा नोट्स इकडे पेस्ट करा:</label>
-        <textarea id="rawInput" placeholder="उदा. 
-फळ
- सफरचंद
+        <textarea id="rawInput" placeholder="इथे माहिती पेस्ट करा...
+उदा:
+फळे
  आंबा
+ चिकू
 भाज्या
- कोबी
- मेथी"></textarea>
-        
+ कोबी"></textarea>
         <div class="controls">
-            <button class="btn-convert" onclick="processAndRender()">माइंड मॅप बनवा</button>
-            <button class="btn-download" onclick="downloadImage()">Download PNG</button>
-            <button onclick="clearText()">Clear</button>
+            <button class="btn-blue" onclick="generateMap()">माइंड मॅप बनवा</button>
+            <button class="btn-green" onclick="downloadPNG()">Download PNG</button>
+            <button class="btn-red" onclick="clearAll()">Clear</button>
         </div>
     </div>
-
     <div class="viewer">
-        <div id="capture">
-            <div id="graphDiv" class="mermaid"></div>
+        <div id="capture-area">
+            <div id="graphDiv"></div>
         </div>
     </div>
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.initialize({ startOnLoad: true, theme: 'forest', securityLevel: 'loose', mindmap: { useMaxWidth: true } });
 
-    function processAndRender() {
+    async function generateMap() {
         const rawText = document.getElementById('rawInput').value.trim();
-        if (!rawText) return;
+        const status = document.getElementById('status');
+        
+        if (!rawText) {
+            alert("Kripaya kahi tari mahiti taka!");
+            return;
+        }
 
-        // Smart Logic: साध्या टेक्स्टला Mermaid माइंड मॅप फॉरमॅटमध्ये बदलणे
+        status.innerText = "Generating...";
+
+        // Smart Logic to convert plain text to Mermaid format
         let lines = rawText.split('\n');
-        let mermaidCode = "mindmap\n  root((माझी नोट))";
+        let mCode = "mindmap\n  root((माझी नोट))";
 
         lines.forEach(line => {
-            if(line.trim() !== "") {
-                // जर ओळीच्या सुरुवातीला स्पेस असेल तर तो उपविषय मानला जाईल
-                let indent = line.search(/\S/); 
-                let content = line.trim();
-                
-                // साध्या लिस्टला माइंड मॅप फांद्यांमध्ये बदलणे
-                if (indent === 0) {
-                    mermaidCode += `\n    ${content}`;
+            if (line.trim() !== "") {
+                let content = line.trim().replace(/[()]/g, ""); // Remove brackets to avoid errors
+                // Check if line is indented (sub-topic)
+                if (line.startsWith(' ') || line.startsWith('\t')) {
+                    mCode += `\n      ${content}`;
                 } else {
-                    mermaidCode += `\n      ${content}`;
+                    mCode += `\n    ${content}`;
                 }
             }
         });
 
         const output = document.getElementById('graphDiv');
-        output.removeAttribute('data-processed');
-        output.innerHTML = mermaidCode;
+        output.innerHTML = `<div class="mermaid">${mCode}</div>`;
         
-        mermaid.run({ nodes: [output] });
-        document.getElementById('status').innerText = "Updated!";
+        try {
+            await mermaid.run();
+            status.innerText = "Success!";
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Error in format!";
+        }
     }
 
-    function downloadImage() {
-        const area = document.getElementById('capture');
-        html2canvas(area).then(canvas => {
+    function downloadPNG() {
+        const area = document.getElementById('capture-area');
+        html2canvas(area, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'my-notes.png';
+            link.download = 'my-mindmap.png';
             link.href = canvas.toDataURL();
             link.click();
         });
     }
 
-    function clearText() {
+    function clearAll() {
         document.getElementById('rawInput').value = "";
+        document.getElementById('graphDiv').innerHTML = "";
+        document.getElementById('status').innerText = "Cleared";
     }
 </script>
 
