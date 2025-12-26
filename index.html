@@ -4,22 +4,21 @@
     <meta charset="UTF-8">
     <title>AI Backtesting Mindmap</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; max-width: 500px; width: 100%; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
-        button { width: 95%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #1557b0; }
-        #status { margin-top: 20px; font-weight: bold; color: #555; }
-        #mapResult { margin-top: 20px; max-width: 100%; border-radius: 10px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; max-width: 600px; width: 100%; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 8px; }
+        button { width: 95%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 20px; font-weight: bold; color: #1a73e8; }
+        #mapResult { margin-top: 20px; max-width: 100%; border-radius: 10px; display: none; background: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📈 Backtesting AI Map</h2>
-    <p>तुमच्या Key द्वारे GRU & LSTM मॅप तयार करा</p>
-    <input type="password" id="apiKey" placeholder="तुमची API Key इथे टाका">
-    <button onclick="runProject()">मॅप तयार करा ✨</button>
+    <h2>🚀 Backtesting AI Map (v2.0 Flash)</h2>
+    <p>GRU आणि LSTM मॉडेल्सचा वेगवान नकाशा</p>
+    <input type="password" id="apiKey" placeholder="तुमची API Key टाका">
+    <button onclick="generateMap()">मॅप तयार करा ✨</button>
     <div id="status">Ready</div>
 </div>
 
@@ -27,20 +26,23 @@
 <img id="mapResult" src="">
 
 <script>
-async function runProject() {
+async function generateMap() {
     const key = document.getElementById('apiKey').value.trim();
     const status = document.getElementById('status');
     const img = document.getElementById('mapResult');
 
-    if(!key) { alert("कृपया आधी Key टाका!"); return; }
+    if(!key) { alert("Key आवश्यक आहे!"); return; }
 
-    status.innerText = "तपासत आहे... आणि मॅप बनवत आहे...";
+    status.innerText = "माहिती मिळवत आहे... (Using Gemini 2.0 Flash)";
     img.style.display = "none";
 
-    // आपण आता सर्वात जास्त चालणारे मॉडेल वापरत आहोत
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // तुमच्या लिस्टनुसार आपण हे मॉडेल वापरत आहोत
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 
-    const prompt = "Create a mermaid mindmap for Backtesting with GRU and LSTM models. Highlight why GRU is faster than LSTM. Start with 'mindmap' syntax. No extra text.";
+    const prompt = `Create a detailed Mermaid mindmap for "Stock Market Backtesting using GRU and LSTM". 
+    Highlight that GRU is FASTER than LSTM due to fewer gates. 
+    Include nodes for: Data Preprocessing, Model Training, and Speed Comparison. 
+    Give ONLY the mermaid code starting with "mindmap".`;
 
     try {
         const response = await fetch(url, {
@@ -55,18 +57,17 @@ async function runProject() {
             let aiText = data.candidates[0].content.parts[0].text;
             let cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
             
-            // Kroki API द्वारे इमेजमध्ये रूपांतर
             const encoded = btoa(unescape(encodeURIComponent(cleanCode)));
             img.src = `https://kroki.io/mermaid/svg/${encoded}`;
             img.style.display = "block";
             status.style.color = "green";
-            status.innerText = "यशस्वी! तुमचा GRU/LSTM मॅप तयार आहे. ✅";
+            status.innerText = "यशस्वी! तुमचा बॅकटेंस्टिंग मॅप तयार आहे. ✅";
         } else {
             status.style.color = "red";
-            status.innerText = "Error: " + (data.error ? data.error.message : "Key नीट तपासा किंवा API 'Enable' करा.");
+            status.innerText = "Error: " + (data.error ? data.error.message : "काहीतरी चुकले");
         }
     } catch (e) {
-        status.innerText = "नेटवर्क किंवा कोडमध्ये एरर आहे.";
+        status.innerText = "Connection Error!";
     }
 }
 </script>
