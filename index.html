@@ -2,74 +2,58 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>AI Trading Map</title>
+    <title>माझा स्वतःचा AI माइंड मॅप</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f7f6; }
-        .box { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input { padding: 10px; width: 250px; margin: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        #status { margin-top: 15px; color: blue; font-weight: bold; }
-        img { margin-top: 20px; max-width: 90%; display: none; border: 2px solid #ddd; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        .editor-container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        textarea { width: 80%; height: 150px; padding: 15px; border-radius: 10px; border: 2px solid #1a73e8; font-family: monospace; }
+        button { padding: 12px 30px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #output { background: white; padding: 20px; border-radius: 15px; margin-top: 30px; width: 90%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 300px; display: inline-block;}
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>📈 GRU & LSTM Backtesting Map</h3>
-    <input type="password" id="apiKey" placeholder="तुमची API Key टाका">
-    <br>
-    <button id="btn" onclick="makeMap()">मॅप तयार करा ✨</button>
-    <div id="status">Ready</div>
-</div>
-<br>
-<img id="mapImg" src="">
+    <h1>🧠 माझा माइंड मॅप क्रिएटर</h1>
+    <p>खालील बॉक्समध्ये कोड लिहा आणि नकाशा तयार करा!</p>
 
-<script>
-async function makeMap() {
-    const key = document.getElementById('apiKey').value.trim();
-    const status = document.getElementById('status');
-    const img = document.getElementById('mapImg');
-    const btn = document.getElementById('btn');
+    <div class="editor-container">
+        <textarea id="mermaidCode">
+mindmap
+  root((बॅकटेंस्टिंग प्रोजेक्ट))
+    GRU मॉडेल
+      जलद ट्रेनिंग
+      कमी मेमरी
+      2 गेट्स (Update/Reset)
+    LSTM मॉडेल
+      जास्त अचूकता
+      संथ प्रोसेस
+      3 गेट्स
+    डेटा प्रोसेसिंग
+      Scaling
+      Split
+        </textarea>
+        <button onclick="renderMap()">नकाशा अपडेट करा 🚀</button>
+    </div>
 
-    if(!key) { alert("Key टाका!"); return; }
+    <div id="output" class="mermaid">
+        </div>
 
-    // बटण डिसेबल करा जेणेकरून डबल क्लिक होणार नाही
-    btn.disabled = true;
-    status.innerText = "काम सुरू आहे... कृपया थांबा.";
-    img.style.display = "none";
+    <script>
+        mermaid.initialize({ startOnLoad: true });
 
-    // आपण gemini-1.5-flash वापरत आहोत जे जास्त स्टेबल आहे
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-
-    const prompt = "Create a mermaid mindmap for Backtesting Trading with GRU and LSTM. Show why GRU is faster. Give only mermaid code.";
-
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-
-        const data = await res.json();
-
-        if (data.candidates) {
-            let code = data.candidates[0].content.parts[0].text.replace(/```mermaid|```/g, "").trim();
-            const encoded = btoa(unescape(encodeURIComponent(code)));
-            img.src = `https://kroki.io/mermaid/svg/${encoded}`;
-            img.style.display = "block";
-            status.style.color = "green";
-            status.innerText = "यशस्वी! ✅";
-        } else {
-            status.style.color = "red";
-            status.innerText = "Error: " + (data.error ? data.error.message : "Key नीट तपासा");
+        async function renderMap() {
+            const code = document.getElementById('mermaidCode').value;
+            const output = document.getElementById('output');
+            
+            // जुना मॅप काढून नवीन तयार करणे
+            output.removeAttribute('data-processed');
+            output.innerHTML = code;
+            
+            await mermaid.run({
+                nodes: [output],
+            });
         }
-    } catch (e) {
-        status.innerText = "नेटवर्क प्रॉब्लेम!";
-    } finally {
-        btn.disabled = false; // बटण पुन्हा सुरू करा
-    }
-}
-</script>
-
+    </script>
 </body>
 </html>
