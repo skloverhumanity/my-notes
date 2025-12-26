@@ -46,21 +46,6 @@
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
-
-    window.onload = () => {
-        const savedKey = localStorage.getItem('my_secure_gemini_key');
-        if (savedKey) document.getElementById('apiKey').value = savedKey;
-    };
-
-    function saveKey() {
-        const key = document.getElementById('apiKey').value.trim();
-        if (key) {
-            localStorage.setItem('my_secure_gemini_key', key);
-            alert("Key सुरक्षितपणे सेव्ह झाली!");
-        }
-    }
-
     async function askAI() {
         const key = document.getElementById('apiKey').value.trim();
         const topic = document.getElementById('topicInput').value.trim();
@@ -73,14 +58,9 @@
         }
 
         status.innerText = "AI माहिती प्रोसेस करत आहे...";
+        container.innerHTML = ""; // जुना मॅप पुसून टाका
 
-        // AI ला स्पष्ट सूचना (Prompt)
-        const prompt = `Generate a Mermaid.js mindmap for "${topic}". 
-        Rules:
-        1. Start with "mindmap"
-        2. Use "root((Title))" for the center.
-        3. Do not use any special characters like ( ) [ ] { } : in the labels.
-        4. Give only the code. No explanation.`;
+        const prompt = `Generate a Mermaid.js mindmap for "${topic}". Start with "mindmap" and "root((Title))". Only code, no text.`;
 
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
@@ -90,27 +70,34 @@
             });
 
             const data = await response.json();
-            let aiText = data.candidates[0].content.parts[0].text;
 
-            // --- CLEANING LOGIC (Syntax Error फिक्स करण्यासाठी) ---
+            // --- DEBUGGING LOGIC ---
+            if (data.error) {
+                console.error("API Error:", data.error);
+                status.innerText = "Error: " + data.error.message; // स्क्रीनवर नेमका एरर दाखवेल
+                return;
+            }
+
+            if (!data.candidates || data.candidates.length === 0) {
+                status.innerText = "AI कडून उत्तर मिळाले नाही. पुन्हा प्रयत्न करा.";
+                return;
+            }
+
+            let aiText = data.candidates[0].content.parts[0].text;
             let cleanedCode = aiText.replace(/```mermaid|```/g, "").trim();
-            // ओळींमधील नको असलेले कंस काढणे
-            cleanedCode = cleanedCode.split('\n').map(line => {
-                if (line.includes('root')) return line; // Root नोडला सोडून
-                return line.replace(/[()\[\]{}]/g, ""); // इतर ओळींतील कंस काढणे
-            }).join('\n');
 
             container.removeAttribute('data-processed');
             container.innerHTML = cleanedCode;
 
             await mermaid.run({ nodes: [container] });
             status.innerText = "मॅप तयार झाला! ✅";
+
         } catch (error) {
-            console.error(error);
-            status.innerText = "Error! Key किंवा इंटरनेट तपासा.";
+            console.error("Connection Error:", error);
+            status.innerText = "इंटरनेट किंवा कनेक्शन एरर!";
         }
     }
-
+</script>
     function downloadPNG() {
         html2canvas(document.getElementById('capture')).then(canvas => {
             const link = document.createElement('a');
