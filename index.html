@@ -2,61 +2,74 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>AI Backtesting Mindmap</title>
+    <title>AI Trading Map</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; max-width: 600px; width: 100%; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 8px; }
-        button { width: 95%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #status { margin-top: 20px; font-weight: bold; color: #1a73e8; }
-        #mapResult { margin-top: 20px; max-width: 100%; border-radius: 10px; display: none; background: white; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f7f6; }
+        .box { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input { padding: 10px; width: 250px; margin: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        #status { margin-top: 15px; color: blue; font-weight: bold; }
+        img { margin-top: 20px; max-width: 90%; display: none; border: 2px solid #ddd; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🚀 Backtesting AI Map (v2.0 Flash)</h2>
-    <p>GRU आणि LSTM मॉडेल्सचा वेगवान नकाशा</p>
+<div class="box">
+    <h3>📈 GRU & LSTM Backtesting Map</h3>
     <input type="password" id="apiKey" placeholder="तुमची API Key टाका">
-    <button onclick="generateMap()">मॅप तयार करा ✨</button>
+    <br>
+    <button id="btn" onclick="makeMap()">मॅप तयार करा ✨</button>
     <div id="status">Ready</div>
 </div>
-
 <br>
-<img id="mapResult" src="">
+<img id="mapImg" src="">
 
 <script>
-async function generateMap() {
+async function makeMap() {
     const key = document.getElementById('apiKey').value.trim();
     const status = document.getElementById('status');
-    const img = document.getElementById('mapResult');
+    const img = document.getElementById('mapImg');
+    const btn = document.getElementById('btn');
 
-    status.innerText = "Processing... (Using Stable Model)";
-    
-    // आपण आता 1.5-flash वापरूया, ज्याची फ्री लिमिट जास्त असते
-const url = https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key};
-    const prompt = "Create a mermaid mindmap for Backtesting Trading with GRU and LSTM. Focus on why GRU is faster. Give ONLY mermaid code.";
+    if(!key) { alert("Key टाका!"); return; }
+
+    // बटण डिसेबल करा जेणेकरून डबल क्लिक होणार नाही
+    btn.disabled = true;
+    status.innerText = "काम सुरू आहे... कृपया थांबा.";
+    img.style.display = "none";
+
+    // आपण gemini-1.5-flash वापरत आहोत जे जास्त स्टेबल आहे
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+    const prompt = "Create a mermaid mindmap for Backtesting Trading with GRU and LSTM. Show why GRU is faster. Give only mermaid code.";
 
     try {
-        const response = await fetch(url, {
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.candidates) {
             let code = data.candidates[0].content.parts[0].text.replace(/```mermaid|```/g, "").trim();
             const encoded = btoa(unescape(encodeURIComponent(code)));
             img.src = `https://kroki.io/mermaid/svg/${encoded}`;
             img.style.display = "block";
+            status.style.color = "green";
             status.innerText = "यशस्वी! ✅";
         } else {
-            status.innerText = "अजूनही लिमिटचा प्रॉब्लेम आहे. थोड्या वेळाने प्रयत्न करा.";
+            status.style.color = "red";
+            status.innerText = "Error: " + (data.error ? data.error.message : "Key नीट तपासा");
         }
     } catch (e) {
-        status.innerText = "
+        status.innerText = "नेटवर्क प्रॉब्लेम!";
+    } finally {
+        btn.disabled = false; // बटण पुन्हा सुरू करा
+    }
+}
+</script>
 
 </body>
 </html>
