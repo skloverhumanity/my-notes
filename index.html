@@ -1,4 +1,47 @@
-try {
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal AI Mindmap Maker</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f4f8; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: inline-block; width: 90%; max-width: 700px; }
+        textarea { width: 95%; height: 100px; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
+        input { width: 95%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        button { padding: 12px 30px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; font-weight: bold; color: #2980b9; }
+        #output { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; min-height: 300px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🧠 Universal AI Mindmap Maker</h2>
+    <input type="password" id="hfKey" placeholder="तुमची Hugging Face Key टाका">
+    <textarea id="inputText" placeholder="इथे माहिती पेस्ट करा (उदा. GRU vs LSTM)"></textarea>
+    <br>
+    <button onclick="generateMap()">मॅप तयार करा 🚀</button>
+    <div id="status">Ready</div>
+</div>
+
+<div id="output" class="mermaid"></div>
+
+<script>
+    mermaid.initialize({ startOnLoad: true });
+
+    async function generateMap() {
+        const key = document.getElementById('hfKey').value.trim();
+        const text = document.getElementById('inputText').value.trim();
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+
+        if(!key || !text) { alert("Key आणि Text दोन्ही आवश्यक आहेत!"); return; }
+
+        status.innerText = "AI विचार करत आहे... कृपया थोडा वेळ थांबा.";
+        status.style.color = "blue";
+
+        try {
             const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2", {
                 method: "POST",
                 headers: { 
@@ -6,17 +49,36 @@ try {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    inputs: `[INST] Create a simple mermaid.js mindmap code. Start with 'mindmap'. No chat, just code: ${text} [/INST]`,
-                    options: { wait_for_model: true } // हा महत्त्वाचा बदल: मॉडेल लोड होण्याची वाट पाहेल
+                    inputs: `[INST] Create a simple mermaid.js mindmap code. Start with 'mindmap'. No talk, only code: ${text} [/INST]`,
+                    options: { wait_for_model: true } 
                 })
             });
 
             const data = await response.json();
 
-            // जर मॉडेल अजूनही लोड होत असेल तर...
+            // जर मॉडेल लोड होत असेल (Loading Error)
             if (data.error && data.estimated_time) {
-                status.innerText = `मॉडेल तयार होत आहे... ${Math.round(data.estimated_time)} सेकंद थांबा.`;
-                return; 
+                status.innerText = `मॉडेल तयार होत आहे... ${Math.round(data.estimated_time)} सेकंदात पुन्हा प्रयत्न करा.`;
+                return;
             }
-            
-            // बाकीचा कोड तसाच...
+
+            let aiResponse = data[0].generated_text;
+            let mermaidCode = aiResponse.substring(aiResponse.indexOf("mindmap"));
+            mermaidCode = mermaidCode.split("`")[0].trim();
+
+            output.removeAttribute('data-processed');
+            output.innerHTML = mermaidCode;
+            await mermaid.run({ nodes: [output] });
+
+            status.innerText = "यशस्वी! ✅";
+            status.style.color = "green";
+
+        } catch (e) {
+            status.innerText = "एरर: पुन्हा बटण दाबा किंवा Key तपासा.";
+            status.style.color = "red";
+        }
+    }
+</script>
+
+</body>
+</html>
