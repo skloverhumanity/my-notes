@@ -3,38 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI MindMap - Universal Fix</title>
+    <title>AI MindMap - Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        :root { --p: #1a73e8; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #fff; border-bottom: 2px solid #ddd; padding: 15px; text-align: center; font-weight: bold; color: var(--p); }
+        body { font-family: sans-serif; margin: 0; background: #f4f4f9; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1a73e8; color: white; padding: 15px; text-align: center; font-weight: bold; }
         .main { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 300px; background: #fff; padding: 20px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 8px; color: white; }
+        .sidebar { width: 300px; background: white; padding: 20px; border-right: 1px solid #ccc; display: flex; flex-direction: column; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; color: white; }
         .btn-ai { background: #8e24aa; }
-        .btn-dl { background: #1e8e3e; }
-        .viewer { flex: 1; padding: 20px; overflow: auto; display: flex; justify-content: center; background: #eef2f7; }
-        #capture { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 700px; }
+        .btn-dl { background: #28a745; }
+        .viewer { flex: 1; padding: 20px; overflow: auto; display: flex; justify-content: center; }
+        #capture { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-width: 600px; }
+        #status { font-size: 12px; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<header>🚀 AI MindMap - Auto Model Fix</header>
+<header>🧠 AI MindMap Pro (Ultimate Stable Version)</header>
 
 <div class="main">
     <div class="sidebar">
-        <label style="font-size: 11px;">API Key:</label>
-        <input type="password" id="apiKey" placeholder="इथे की टाका">
-        <button style="background:#555; font-size: 10px;" onclick="saveK()">Key सेव्ह करा</button>
-        <hr style="width:100%; margin: 15px 0; border: 0.5px solid #eee;">
-        <label style="font-size: 11px;">तुमचा विषय:</label>
-        <textarea id="topic" rows="4" placeholder="उदा. Trading strategy using RSI"></textarea>
+        <label>Gemini API Key:</label>
+        <input type="password" id="apiKey" placeholder="Key पेस्ट करा">
+        <button style="background:#666;" onclick="saveK()">Key सेव्ह करा</button>
+        <hr style="width:100%; margin:15px 0;">
+        <label>विषय लिहा:</label>
+        <textarea id="topic" rows="4" placeholder="उदा. Simple Trading Strategy"></textarea>
+        <div id="status">Ready</div>
         <button class="btn-ai" onclick="runAI()">AI माइंड मॅप बनवा</button>
         <button class="btn-dl" onclick="savePNG()">Download PNG</button>
-        <p id="status" style="font-size: 12px; color: #d93025;"></p>
     </div>
     <div class="viewer">
         <div id="capture"><div id="graph" class="mermaid"></div></div>
@@ -51,7 +51,7 @@
 
     function saveK() {
         const k = document.getElementById('apiKey').value.trim();
-        if (k) { localStorage.setItem('gemini_key', k); alert("Key सेव्ह झाली!"); }
+        if (k) { localStorage.setItem('gemini_key', k); alert("Key सुरक्षितपणे सेव्ह झाली!"); }
     }
 
     async function runAI() {
@@ -60,57 +60,64 @@
         const status = document.getElementById('status');
         const box = document.getElementById('graph');
 
-        if (!key || !topic) { alert("Key आणि विषय आवश्यक आहे!"); return; }
+        if (!key || !topic) { alert("Key आणि विषय आवश्यक!"); return; }
 
-        status.style.color = "#666";
-        status.innerText = "मॉडेल शोधत आहे...";
+        status.style.color = "blue";
+        status.innerText = "माहिती शोधत आहे...";
         box.innerHTML = "";
 
-        const prompt = `Generate a Mermaid.js mindmap for "${topic}". Start with "mindmap" and "root((Topic))". Only code, no text.`;
+        // AI ला अतिशय सोपा कोड देण्याची सूचना
+        const prompt = `Create a Mermaid.js mindmap for "${topic}". Use "mindmap" syntax. Give only the code. No markdown, no backticks.`;
 
-        // १. ट्राय करण्यासाठी वेगवेगळे कॉम्बिनेशन्स (Version + Model Name)
-        const endpoints = [
-            { ver: 'v1beta', mod: 'gemini-1.5-flash' },
-            { ver: 'v1', mod: 'gemini-1.5-flash' },
-            { ver: 'v1beta', mod: 'gemini-pro' }
+        // १. सर्वात जास्त चालणाऱ्या मॉडेलची लिस्ट (Full List)
+        const modelsToTry = [
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-pro"
         ];
 
         let success = false;
 
-        for (let ep of endpoints) {
+        for (let modelName of modelsToTry) {
             if (success) break;
-            status.innerText = `Trying ${ep.mod} (${ep.ver})...`;
+            status.innerText = `Trying: ${modelName}...`;
 
             try {
-                const url = `https://generativelanguage.googleapis.com/${ep.ver}/models/${ep.mod}:generateContent?key=${key}`;
-                const res = await fetch(url, {
+                // आपण v1beta वापरत आहोत कारण ते सर्वात जास्त मॉडेल सपोर्ट करते
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
-                const data = await res.json();
+                const data = await response.json();
 
                 if (data.candidates && data.candidates[0].content) {
-                    let code = data.candidates[0].content.parts[0].text;
-                    let cleanCode = code.replace(/```mermaid|```/g, "").trim();
-                    
+                    let aiText = data.candidates[0].content.parts[0].text;
+                    // AI कधी कधी एक्स्ट्रा मजकूर देते तो काढणे
+                    let cleanCode = aiText.replace(/```mermaid|```/g, "").replace(/mermaid/g, "").trim();
+                    if (!cleanCode.startsWith("mindmap")) cleanCode = "mindmap\n" + cleanCode;
+
                     box.removeAttribute('data-processed');
                     box.innerHTML = cleanCode;
                     await mermaid.run({ nodes: [box] });
                     
                     status.style.color = "green";
-                    status.innerText = `यशस्वी! (Model: ${ep.mod})`;
+                    status.innerText = "मॅप तयार झाला! ✅";
                     success = true;
+                } else if (data.error) {
+                    console.warn(`Model ${modelName} error:`, data.error.message);
                 }
             } catch (e) {
-                console.log(`${ep.mod} failed, trying next...`);
+                console.error(e);
             }
         }
 
         if (!success) {
             status.style.color = "red";
-            status.innerText = "कोणतेही मॉडेल सापडले नाही. कृपया तुमची Key तपासा.";
+            status.innerText = "एक नवीन API Key तयार करून पहा.";
         }
     }
 
