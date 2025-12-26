@@ -3,98 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart MindMap Pro</title>
+    <title>AI MindMap - Free Tier Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; }
+        :root { --p: #1a73e8; --bg: #f0f2f5; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
-        header { background: white; border-bottom: 1px solid #ddd; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .main { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 320px; background: white; padding: 20px; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 10px; width: 100%; }
-        .btn-ai { background: #8e24aa; color: white; }
-        .btn-save { background: #666; color: white; font-size: 11px; }
-        .btn-download { background: #1e8e3e; color: white; }
-        .viewer { flex: 1; padding: 20px; overflow: auto; display: flex; justify-content: center; background: #f0f2f5; }
-        #capture { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-width: 600px; }
+        header { background: #fff; border-bottom: 2px solid #ddd; padding: 15px; text-align: center; }
+        .container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 300px; background: #fff; padding: 20px; border-right: 1px solid #ccc; display: flex; flex-direction: column; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; color: white; transition: 0.3s; }
+        .btn-ai { background: #8e24aa; }
+        .btn-dl { background: #1e8e3e; }
+        .viewer { flex: 1; padding: 20px; overflow: auto; display: flex; justify-content: center; background: #e9ecef; }
+        #capture { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 600px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0; color:var(--primary);">🧠 AI MindMap Pro</h2>
-    <div id="status" style="font-size: 14px; color: #666;">Ready</div>
+    <h2 style="margin:0; color:var(--p);">🚀 Smart AI MindMap (Free Tier)</h2>
+    <div id="status" style="font-size: 13px; color: #666;">Ready</div>
 </header>
 
-<div class="main">
+<div class="container">
     <div class="sidebar">
-        <label style="font-size: 12px; font-weight: bold;">🔑 API Key:</label>
-        <input type="password" id="apiKey" placeholder="Gemini API Key इथे टाका">
-        <button class="btn-save" onclick="saveKey()">Key सेव्ह करा</button>
-        
-        <hr style="width:100%; border:0.5px solid #eee; margin: 10px 0;">
-        
-        <label style="font-size: 12px; font-weight: bold;">📝 तुमचा विषय:</label>
-        <textarea id="topicInput" rows="4" placeholder="उदा. Trading Strategy for Beginners"></textarea>
-        
-        <button class="btn-ai" onclick="askAI()">AI माइंड मॅप बनवा ✨</button>
-        <button class="btn-download" onclick="downloadPNG()">Download PNG</button>
+        <label style="font-size: 11px; font-weight: bold;">API Key (Free Tier):</label>
+        <input type="password" id="apiKey" placeholder="इथे की पेस्ट करा">
+        <button style="background:#555;" onclick="saveK()">Key सेव्ह करा</button>
+        <hr style="width:100%; margin: 15px 0; border: 0.5px solid #eee;">
+        <label style="font-size: 11px; font-weight: bold;">विषय:</label>
+        <textarea id="topic" rows="4" placeholder="उदा. Basic Trading Strategy"></textarea>
+        <button class="btn-ai" onclick="runAI()">AI माइंड मॅप बनवा</button>
+        <button class="btn-dl" onclick="savePNG()">Download PNG</button>
     </div>
-
     <div class="viewer">
-        <div id="capture">
-            <div id="graph" class="mermaid"></div>
-        </div>
+        <div id="capture"><div id="graph" class="mermaid"></div></div>
     </div>
 </div>
 
 <script>
-    // १. Mermaid सुरुवातीला सेट करणे
     mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
 
-    // २. पेज लोड झाल्यावर सेव्ह केलेली की शोधणे
+    // सुरक्षितपणे की लोड करणे
     window.onload = () => {
-        const savedKey = localStorage.getItem('my_secure_gemini_key');
-        if (savedKey) {
-            document.getElementById('apiKey').value = savedKey;
-            document.getElementById('status').innerText = "Key लोड झाली आहे ✅";
-        }
+        const k = localStorage.getItem('gemini_key');
+        if (k) { document.getElementById('apiKey').value = k; document.getElementById('status').innerText = "Key Loaded ✅"; }
     };
 
-    function saveKey() {
-        const key = document.getElementById('apiKey').value.trim();
-        if (key) {
-            localStorage.setItem('my_secure_gemini_key', key);
-            alert("API Key ब्राउझरमध्ये सुरक्षितपणे सेव्ह झाली आहे!");
-        }
+    function saveK() {
+        const k = document.getElementById('apiKey').value.trim();
+        if (k) { localStorage.setItem('gemini_key', k); alert("Key सुरक्षितपणे सेव्ह झाली!"); }
     }
 
-    async function askAI() {
+    async function runAI() {
         const key = document.getElementById('apiKey').value.trim();
-        const topic = document.getElementById('topicInput').value.trim();
+        const topic = document.getElementById('topic').value.trim();
         const status = document.getElementById('status');
-        const container = document.getElementById('graph');
+        const box = document.getElementById('graph');
 
-        if (!key || !topic) {
-            alert("Key आणि विषय दोन्ही टाका!");
-            return;
-        }
+        if (!key || !topic) { alert("Key आणि विषय आवश्यक आहे!"); return; }
 
-        status.innerText = "AI माहिती शोधत आहे...";
-        container.innerHTML = ""; 
+        status.innerText = "AI माहिती गोळा करत आहे...";
+        box.innerHTML = "";
 
-        const prompt = `Generate only Mermaid.js mindmap code for the topic: "${topic}". 
-        Use this exact structure:
-        mindmap
-          root((Main Topic))
-            Branch 1
-            Branch 2
-        Do not use any special characters like brackets or quotes inside labels. No explanations, just code.`;
+        // Free Tier साठी सर्वात अचूक प्रॉम्प्ट
+        const prompt = `Generate a Mermaid.js mindmap for "${topic}". Start with "mindmap" and use "root((Topic Name))" for center. Output only code.`;
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+            // Stable v1 API URL for Free Tier
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -108,26 +89,27 @@
             }
 
             if (data.candidates && data.candidates[0].content) {
-                let aiText = data.candidates[0].content.parts[0].text;
-                let cleanedCode = aiText.replace(/```mermaid|```/g, "").trim();
+                let code = data.candidates[0].content.parts[0].text;
+                let cleanCode = code.replace(/```mermaid|```/g, "").trim();
 
-                container.removeAttribute('data-processed');
-                container.innerHTML = cleanedCode;
+                box.removeAttribute('data-processed');
+                box.innerHTML = cleanCode;
 
-                await mermaid.run({ nodes: [container] });
+                await mermaid.run({ nodes: [box] });
                 status.innerText = "मॅप तयार झाला! ✅";
             }
-        } catch (error) {
-            status.innerText = "इंटरनेट कनेक्शन तपासा.";
+        } catch (e) {
+            status.innerText = "कनेक्शन एरर!";
+            console.error(e);
         }
     }
 
-    function downloadPNG() {
-        html2canvas(document.getElementById('capture')).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'MindMap.png';
-            link.href = canvas.toDataURL();
-            link.click();
+    function savePNG() {
+        html2canvas(document.getElementById('capture')).then(c => {
+            const l = document.createElement('a');
+            l.download = 'MindMap.png';
+            l.href = c.toDataURL();
+            l.click();
         });
     }
 </script>
