@@ -1,49 +1,51 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <title>Model Checker</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f7f6; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
+        input { padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #list { margin-top: 20px; color: #333; text-align: left; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>🔍 उपलब्ध मॉडेल्स तपासा</h3>
+    <input type="password" id="myKey" placeholder="तुमची API Key इथे टाका">
+    <button onclick="checkModels()">मॉडेल्स शोधा</button>
+    <br>
+    <div id="list"></div>
+</div>
+
 <script>
-async function generate() {
-    const key = document.getElementById('apiKey').value.trim();
-    const topic = document.getElementById('topic').value.trim();
-    const status = document.getElementById('status');
-    const img = document.getElementById('resImg');
+async function checkModels() {
+    const key = document.getElementById('myKey').value;
+    const listDiv = document.getElementById('list');
+    listDiv.innerHTML = "तपासत आहे... कृपया थांबा.";
 
-    if(!key) { alert("Key टाका!"); return; }
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const data = await res.json();
 
-    status.innerText = "योग्य मॉडेल शोधत आहे...";
-    img.style.display = "none";
-
-    // या ३ नावांपैकी एक तुमच्या प्रोजेक्टला नक्कीच सपोर्ट करेल
-    const modelList = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro"];
-    let success = false;
-
-    for (let modelName of modelList) {
-        if (success) break;
-        status.innerText = `Trying: ${modelName}...`;
-
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Create mermaid mindmap for ${topic}. Give only code.` }] }] })
+        if (data.models) {
+            let html = "<b>तुमच्या की ला सपोर्ट करणारे मॉडेल्स:</b><ul>";
+            data.models.forEach(m => {
+                html += `<li>${m.name.replace('models/', '')}</li>`;
             });
-
-            const data = await res.json();
-
-            if (data.candidates) {
-                let code = data.candidates[0].content.parts[0].text.replace(/```mermaid|```/g, "").trim();
-                const encoded = btoa(unescape(encodeURIComponent(code)));
-                img.src = `https://kroki.io/mermaid/svg/${encoded}`;
-                img.style.display = "block";
-                status.style.color = "green";
-                status.innerText = `यशस्वी! (${modelName} वापरले)`;
-                success = true;
-            }
-        } catch (e) {
-            console.log(modelName + " failed");
+            html += "</ul><p style='color:green'>आता यातील कोणतेही नाव आपण मॅपसाठी वापरू शकतो!</p>";
+            listDiv.innerHTML = html;
+        } else {
+            listDiv.innerHTML = "<b style='color:red'>Error:</b> " + data.error.message;
         }
-    }
-
-    if (!success) {
-        status.style.color = "red";
-        status.innerText = "कोणतेही मॉडेल सापडले नाही. कृपया तुमची की पुन्हा तपासा.";
+    } catch (e) {
+        listDiv.innerHTML = "काहीतरी चुकले! इंटरनेट तपासा.";
     }
 }
 </script>
+
+</body>
+</html>
