@@ -2,29 +2,31 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>AI Mindmap - Ultimate Success</title>
+    <title>AI MindMap - Fixed Version</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        .sidebar { width: 300px; background: white; padding: 25px; border-right: 1px solid #ddd; }
-        .viewer { flex: 1; display: flex; justify-content: center; align-items: center; background: #ddd; overflow: auto; }
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .sidebar { width: 300px; background: white; padding: 25px; border-right: 1px solid #ddd; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .viewer { flex: 1; display: flex; justify-content: center; align-items: center; background: #e9ecef; overflow: auto; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #status { font-size: 13px; color: #d93025; margin-top: 10px; font-weight: bold; }
-        img { max-width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 10px; display: none; }
+        img { max-width: 95%; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 12px; display: none; background: white; }
     </style>
 </head>
 <body>
 
 <div style="display: flex; flex: 1;">
     <div class="sidebar">
-        <h3>🧠 AI MindMap</h3>
-        <input type="password" id="apiKey" placeholder="तुमची नवीन API Key टाका">
-        <textarea id="topic" rows="4" placeholder="विषय लिहा... उदा. GRU and LSTM Backtesting"></textarea>
-        <button onclick="makeMap()">AI मॅप तयार करा</button>
+        <h3 style="color: #1a73e8;">🧠 AI MindMap</h3>
+        <label style="font-size: 11px;">तुमची API Key टाका:</label>
+        <input type="password" id="apiKey" placeholder="Gemini Key इथे पेस्ट करा">
+        <label style="font-size: 11px;">विषय:</label>
+        <textarea id="topic" rows="4" placeholder="उदा. Backtesting with GRU and LSTM"></textarea>
+        <button onclick="makeMap()">AI मॅप तयार करा ✨</button>
         <div id="status">Ready</div>
     </div>
     <div class="viewer">
-        <div id="loader" style="display:none;">AI माहिती शोधत आहे...</div>
+        <div id="loader" style="display:none; font-weight: bold;">AI माहिती तयार करत आहे... कृपया थोडा वेळ थांबा.</div>
         <img id="mapResult" src="">
     </div>
 </div>
@@ -37,16 +39,17 @@ async function makeMap() {
     const img = document.getElementById('mapResult');
     const loader = document.getElementById('loader');
 
-    if (!key || !topic) { alert("Key आणि विषय आवश्यक!"); return; }
+    if (!key || !topic) { alert("Key आणि विषय दोन्ही आवश्यक आहेत!"); return; }
 
-    status.innerText = "प्रयत्न करत आहे...";
+    status.style.color = "#1a73e8";
+    status.innerText = "माहिती शोधत आहे...";
     loader.style.display = "block";
     img.style.display = "none";
 
-    // आपण आता सर्वात जास्त चालणाऱ्या Free मॉडेलची लिंक वापरत आहोत
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // बदल: आपण आता 'gemini-pro' वापरत आहोत जे सर्व फ्री की वर चालते
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
 
-    const prompt = `Create a simple mindmap for "${topic}". Use Mermaid mindmap syntax. Include nodes for GRU and LSTM benefits in backtesting speed. Give only code.`;
+    const prompt = `Create a Mermaid mindmap for "${topic}". Include branches for GRU and LSTM models for faster backtesting. Give ONLY the mermaid code starting with "mindmap". No markdown.`;
 
     try {
         const response = await fetch(url, {
@@ -57,11 +60,13 @@ async function makeMap() {
 
         const data = await response.json();
 
-        if (data.candidates) {
+        if (data.candidates && data.candidates[0].content) {
             let aiCode = data.candidates[0].content.parts[0].text;
+            // एक्स्ट्रा मजकूर काढणे
             let cleanCode = aiCode.replace(/```mermaid|```/g, "").trim();
+            if (!cleanCode.includes("mindmap")) cleanCode = "mindmap\n" + cleanCode;
             
-            // इमेजमध्ये रूपांतर करण्यासाठी Kroki API
+            // इमेज बनवण्यासाठी Kroki API ला पाठवणे
             const encoded = btoa(unescape(encodeURIComponent(cleanCode)));
             img.src = `https://kroki.io/mermaid/svg/${encoded}`;
             
@@ -69,15 +74,15 @@ async function makeMap() {
                 loader.style.display = "none";
                 img.style.display = "block";
                 status.style.color = "green";
-                status.innerText = "मॅप यशस्वीरीत्या तयार झाला! ✅";
+                status.innerText = "मॅप तयार झाला! ✅";
             };
         } else {
-            // जर एरर आला तर तो नेमका काय आहे ते दाखवा
-            status.innerText = "Error: " + (data.error ? data.error.message : "Key अमान्य आहे.");
+            status.style.color = "red";
+            status.innerText = "Error: " + (data.error ? data.error.message : "Key काम करत नाहीये.");
             loader.style.display = "none";
         }
     } catch (e) {
-        status.innerText = "नेटवर्क प्रॉब्लेम!";
+        status.innerText = "नेटवर्क एरर! पुन्हा प्रयत्न करा.";
         loader.style.display = "none";
     }
 }
