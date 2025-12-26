@@ -1,34 +1,99 @@
-async function generateMap() {
-    const key = document.getElementById('apiKey').value.trim();
-    const topic = document.getElementById('topic').value.trim();
-    const status = document.getElementById('status');
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <title>AI MindMap Pro</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1a73e8; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 320px; background: white; padding: 25px; border-right: 1px solid #ddd; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        button:hover { background: #1557b0; }
+        #status { font-size: 13px; color: #d93025; margin-top: 15px; font-weight: bold; line-height: 1.4; }
+        .viewer { flex: 1; padding: 30px; display: flex; justify-content: center; align-items: flex-start; overflow: auto; background: #e9ecef; }
+        #mapImage { max-width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-radius: 12px; display: none; background: white; }
+    </style>
+</head>
+<body>
 
-    if (!key) { alert("कृपया आधी Key टाका!"); return; }
+<header>🧠 AI MindMap Pro</header>
 
-    status.innerText = "तपासत आहे...";
+<div class="main">
+    <div class="sidebar">
+        <label style="font-size: 12px; color: #666;">तुमची API Key टाका:</label>
+        <input type="password" id="apiKey" placeholder="Paste Gemini Key Here">
+        
+        <label style="font-size: 12px; color: #666;">ट्रेडिंग किंवा कोणताही विषय लिहा:</label>
+        <textarea id="topic" rows="4" placeholder="उदा. Intraday Trading Strategy"></textarea>
+        
+        <button onclick="generateMap()">AI मॅप तयार करा ✨</button>
+        
+        <div id="status">Ready</div>
+    </div>
 
-    try {
-        // आपण आता थेट गुगलला विचारूया की ही की चालते का
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: "Hello, answer in 1 word." }] }] })
-        });
+    <div class="viewer">
+        <div id="loading" style="display: none; font-weight: bold; color: #1a73e8;">AI आराखडा तयार करत आहे... कृपया १०-१५ सेकंद थांबा.</div>
+        <img id="mapImage" src="" alt="Mindmap Result">
+    </div>
+</div>
 
-        const data = await res.json();
+<script>
+    async function generateMap() {
+        const key = document.getElementById('apiKey').value.trim();
+        const topic = document.getElementById('topic').value.trim();
+        const status = document.getElementById('status');
+        const img = document.getElementById('mapImage');
+        const loading = document.getElementById('loading');
 
-        if (data.error) {
-            // गुगलने दिलेला खरा मेसेज दाखवणे
-            status.style.color = "red";
-            status.innerHTML = "<b>API Error:</b> " + data.error.message + 
-                               "<br><br><i>टिप: गुगल क्लाउड कन्सोलमध्ये 'Generative Language API' Enable करा.</i>";
-            console.log(data.error);
-        } else {
-            status.style.color = "green";
-            status.innerText = "तुमची की एकदम बरोबर आहे! मॅप तयार होत आहे...";
-            // मॅप बनवण्याची पुढची स्टेप इथे सुरू होईल...
+        if (!key || !topic) {
+            alert("कृपया Key आणि विषय दोन्ही टाका!");
+            return;
         }
-    } catch (e) {
-        status.innerText = "नेटवर्क एरर! इंटरनेट तपासा.";
+
+        status.style.color = "#1a73e8";
+        status.innerText = "तपासत आहे...";
+        loading.style.display = "block";
+        img.style.display = "none";
+
+        const prompt = `Create a professional mindmap for "${topic}" in Mermaid.js syntax. Start with "mindmap" and "root((${topic}))". Give only the code.`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                status.style.color = "red";
+                status.innerHTML = "<b>API Error:</b> " + data.error.message;
+                loading.style.display = "none";
+            } else if (data.candidates && data.candidates[0].content) {
+                const aiText = data.candidates[0].content.parts[0].text;
+                const cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
+                
+                // बाहेरील इमेज सर्व्हिस वापरून मॅप रेंडर करणे (Kroki.io)
+                const encodedData = btoa(unescape(encodeURIComponent(cleanCode)));
+                img.src = `https://kroki.io/mermaid/svg/${encodedData}`;
+                
+                img.onload = () => {
+                    loading.style.display = "none";
+                    img.style.display = "block";
+                    status.style.color = "green";
+                    status.innerText = "मॅप यशस्वीरीत्या तयार झाला! ✅";
+                };
+            }
+        } catch (e) {
+            status.style.color = "red";
+            status.innerText = "नेटवर्क एरर! इंटरनेट तपासा.";
+            loading.style.display = "none";
+        }
     }
-}
+</script>
+
+</body>
+</html>
