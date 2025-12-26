@@ -2,108 +2,89 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>AI MindMap - Final Success Version</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
+    <title>AI MindMap - Instant Fix</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; background: #f0f2f5; }
-        .header { background: #1a73e8; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
-        .main { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 320px; background: white; padding: 20px; border-right: 1px solid #ccc; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
-        textarea, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-ai { background: #8e24aa; }
-        .btn-sample { background: #666; }
-        #status { color: #d93025; font-size: 13px; margin-bottom: 10px; font-weight: bold; }
-        .viewer { flex: 1; padding: 40px; overflow: auto; display: flex; justify-content: center; }
-        #graph { background: white; padding: 20px; border-radius: 10px; border: 1px solid #ddd; min-width: 500px; text-align: center; }
+        body { font-family: sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; }
+        .sidebar { width: 300px; background: white; padding: 20px; border-right: 1px solid #ddd; }
+        .viewer { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: center; background: #e5e5e5; overflow: auto; }
+        #mapImage { max-width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 10px; display: none; background: white; }
+        textarea, input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #status { font-size: 13px; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="header">🧠 AI MindMap Pro</div>
-
-<div class="main">
+<div style="display: flex; flex: 1;">
     <div class="sidebar">
-        <label style="font-size: 12px;">API Key:</label>
-        <input type="password" id="apiKey" placeholder="तुमची नवीन की इथे टाका">
-        <label style="font-size: 12px;">विषय:</label>
-        <textarea id="topic" rows="3" placeholder="उदा. Trading Strategy"></textarea>
+        <h2>🧠 AI मॅप</h2>
+        <label>Gemini API Key:</label>
+        <input type="password" id="apiKey" placeholder="Key पेस्ट करा">
+        <label>तुमचा विषय:</label>
+        <textarea id="topic" rows="4" placeholder="उदा. Trading Strategy"></textarea>
+        <button onclick="generateMap()">AI मॅप तयार करा</button>
         <div id="status">Ready</div>
-        <button class="btn-ai" onclick="generateAI()">AI माइंड मॅप बनवा ✨</button>
-        <button class="btn-sample" onclick="showSample()">Sample (की शिवाय चेक करा)</button>
+        <p style="font-size: 11px; color: #888; margin-top: 20px;">टीप: हा मॅप थेट इमेज स्वरूपात तयार होईल.</p>
     </div>
+
     <div class="viewer">
-        <div id="graph" class="mermaid"></div>
+        <div id="loading" style="display: none;">लोड होत आहे... कृपया थांबा.</div>
+        <img id="mapImage" src="" alt="Mindmap">
     </div>
 </div>
 
 <script>
-    // १. Mermaid Configuration
-    mermaid.initialize({ startOnLoad: false, theme: 'forest', securityLevel: 'loose' });
-
-    // २. की शिवाय मॅप चालतोय का हे पाहण्यासाठी Sample Function
-    function showSample() {
-        const sampleCode = `mindmap
-  root((Trading Strategy))
-    Indicators
-      RSI
-      Moving Average
-    Risk Management
-      Stop Loss
-      Position Sizing
-    Entry Rules
-      Breakout
-      Retest`;
-        renderMap(sampleCode);
-    }
-
-    // ३. मॅप रेंडर करण्याचे फंक्शन
-    async function renderMap(code) {
-        const container = document.getElementById('graph');
-        container.removeAttribute('data-processed');
-        container.innerHTML = code;
-        try {
-            await mermaid.run({ nodes: [container] });
-            document.getElementById('status').style.color = "green";
-            document.getElementById('status').innerText = "मॅप यशस्वीरीत्या तयार झाला!";
-        } catch (e) {
-            document.getElementById('status').innerText = "Syntax Error! पुन्हा प्रयत्न करा.";
-        }
-    }
-
-    // ४. मुख्य AI फंक्शन
-    async function generateAI() {
+    async function generateMap() {
         const key = document.getElementById('apiKey').value.trim();
         const topic = document.getElementById('topic').value.trim();
         const status = document.getElementById('status');
+        const img = document.getElementById('mapImage');
+        const loading = document.getElementById('loading');
 
         if (!key || !topic) { alert("Key आणि विषय आवश्यक!"); return; }
 
-        status.style.color = "blue";
-        status.innerText = "AI कडून माहिती घेत आहे...";
+        status.innerText = "AI कडून आराखडा घेत आहे...";
+        loading.style.display = "block";
+        img.style.display = "none";
 
-        const prompt = `Create a Mermaid.js mindmap for "${topic}". Start with 'mindmap' and 'root((Topic))'. Only code, no markdown.`;
+        // AI ला सोप्या भाषेत सांगणे
+        const prompt = `Create a text-based mindmap for "${topic}". 
+        Use this format:
+        Root
+        -- Branch 1
+        --- Sub-branch 1
+        -- Branch 2
+        Keep it very simple and logical.`;
 
         try {
-            // v1beta version with 1.5-flash
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            const res = await fetch(url, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
             const data = await res.json();
-
-            if (data.candidates && data.candidates[0].content) {
-                let aiText = data.candidates[0].content.parts[0].text;
-                let cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
-                renderMap(cleanCode);
+            
+            if (data.candidates) {
+                const aiText = data.candidates[0].content.parts[0].text;
+                
+                // आता आपण या टेक्स्टला इमेज मध्ये बदलणाऱ्या एका फ्री सर्व्हिसचा वापर करू (Kroki API)
+                // हे Mermaid लायब्ररीशिवाय मॅप बनवते
+                const encodedData = btoa(unescape(encodeURIComponent("mindmap\n" + aiText)));
+                img.src = `https://kroki.io/mermaid/svg/${encodedData}`;
+                
+                img.onload = () => {
+                    loading.style.display = "none";
+                    img.style.display = "block";
+                    status.innerText = "मॅप तयार झाला! ✅";
+                };
             } else {
-                status.innerText = "Error: की काम करत नाहीये.";
+                status.innerText = "Error: Key तपासा.";
+                loading.style.display = "none";
             }
-        } catch (err) {
-            status.innerText = "Connection Error!";
+        } catch (e) {
+            status.innerText = "इंटरनेट कनेक्शन तपासा.";
+            loading.style.display = "none";
         }
     }
 </script>
