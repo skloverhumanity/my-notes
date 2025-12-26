@@ -47,53 +47,58 @@
         const img = document.getElementById('mapImage');
         const loading = document.getElementById('loading');
 
-        if (!key || !topic) {
-            alert("कृपया Key आणि विषय दोन्ही टाका!");
-            return;
-        }
+        if (!key || !topic) { alert("Key आणि विषय आवश्यक!"); return; }
 
         status.style.color = "#1a73e8";
-        status.innerText = "तपासत आहे...";
+        status.innerText = "मॉडेल शोधत आहे (Try 1/3)...";
         loading.style.display = "block";
         img.style.display = "none";
 
-        const prompt = `Create a professional mindmap for "${topic}" in Mermaid.js syntax. Start with "mindmap" and "root((${topic}))". Give only the code.`;
+        // ट्राय करण्यासाठी मॉडेल्सची लिस्ट
+        const models = ["gemini-pro", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
+        let success = false;
 
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+        const prompt = `Create a Mermaid.js mindmap for "${topic}". Use "mindmap" syntax. Start with root((${topic})). Only code.`;
 
-            const data = await res.json();
+        for (let model of models) {
+            if (success) break;
+            status.innerText = `Trying model: ${model}...`;
 
-            if (data.error) {
-                status.style.color = "red";
-                status.innerHTML = "<b>API Error:</b> " + data.error.message;
-                loading.style.display = "none";
-            } else if (data.candidates && data.candidates[0].content) {
-                const aiText = data.candidates[0].content.parts[0].text;
-                const cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
-                
-                // बाहेरील इमेज सर्व्हिस वापरून मॅप रेंडर करणे (Kroki.io)
-                const encodedData = btoa(unescape(encodeURIComponent(cleanCode)));
-                img.src = `https://kroki.io/mermaid/svg/${encodedData}`;
-                
-                img.onload = () => {
-                    loading.style.display = "none";
-                    img.style.display = "block";
-                    status.style.color = "green";
-                    status.innerText = "मॅप यशस्वीरीत्या तयार झाला! ✅";
-                };
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await res.json();
+
+                if (data.candidates && data.candidates[0].content) {
+                    const aiText = data.candidates[0].content.parts[0].text;
+                    const cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
+                    
+                    const encodedData = btoa(unescape(encodeURIComponent(cleanCode)));
+                    img.src = `https://kroki.io/mermaid/svg/${encodedData}`;
+                    
+                    img.onload = () => {
+                        loading.style.display = "none";
+                        img.style.display = "block";
+                        status.style.color = "green";
+                        status.innerText = "यशस्वी! " + model + " वापरले गेले. ✅";
+                    };
+                    success = true;
+                }
+            } catch (e) {
+                console.log(model + " failed.");
             }
-        } catch (e) {
-            status.style.color = "red";
-            status.innerText = "नेटवर्क एरर! इंटरनेट तपासा.";
+        }
+
+        if (!success) {
             loading.style.display = "none";
+            status.style.color = "red";
+            status.innerHTML = "<b>API Error:</b> तुमची Key या मॉडेल्सना सपोर्ट करत नाहीये. <br> कृपया Google AI Studio मध्ये नवीन Key तयार करा.";
         }
     }
 </script>
-
 </body>
 </html>
