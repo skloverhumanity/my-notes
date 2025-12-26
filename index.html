@@ -31,18 +31,12 @@ async function generateMap() {
     const status = document.getElementById('status');
     const img = document.getElementById('mapResult');
 
-    if(!key) { alert("Key आवश्यक आहे!"); return; }
+    status.innerText = "Processing... (Using Stable Model)";
+    
+    // आपण आता 1.5-flash वापरूया, ज्याची फ्री लिमिट जास्त असते
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-    status.innerText = "माहिती मिळवत आहे... (Using Gemini 2.0 Flash)";
-    img.style.display = "none";
-
-    // तुमच्या लिस्टनुसार आपण हे मॉडेल वापरत आहोत
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-
-    const prompt = `Create a detailed Mermaid mindmap for "Stock Market Backtesting using GRU and LSTM". 
-    Highlight that GRU is FASTER than LSTM due to fewer gates. 
-    Include nodes for: Data Preprocessing, Model Training, and Speed Comparison. 
-    Give ONLY the mermaid code starting with "mindmap".`;
+    const prompt = "Create a mermaid mindmap for Backtesting Trading with GRU and LSTM. Focus on why GRU is faster. Give ONLY mermaid code.";
 
     try {
         const response = await fetch(url, {
@@ -54,23 +48,16 @@ async function generateMap() {
         const data = await response.json();
 
         if (data.candidates) {
-            let aiText = data.candidates[0].content.parts[0].text;
-            let cleanCode = aiText.replace(/```mermaid|```/g, "").trim();
-            
-            const encoded = btoa(unescape(encodeURIComponent(cleanCode)));
+            let code = data.candidates[0].content.parts[0].text.replace(/```mermaid|```/g, "").trim();
+            const encoded = btoa(unescape(encodeURIComponent(code)));
             img.src = `https://kroki.io/mermaid/svg/${encoded}`;
             img.style.display = "block";
-            status.style.color = "green";
-            status.innerText = "यशस्वी! तुमचा बॅकटेंस्टिंग मॅप तयार आहे. ✅";
+            status.innerText = "यशस्वी! ✅";
         } else {
-            status.style.color = "red";
-            status.innerText = "Error: " + (data.error ? data.error.message : "काहीतरी चुकले");
+            status.innerText = "अजूनही लिमिटचा प्रॉब्लेम आहे. थोड्या वेळाने प्रयत्न करा.";
         }
     } catch (e) {
-        status.innerText = "Connection Error!";
-    }
-}
-</script>
+        status.innerText = "
 
 </body>
 </html>
